@@ -1,0 +1,18 @@
+# Environments
+.myvenv/
+.env
+
+# Cache
+__pycache__/
+*.pyc
+
+# Test and Data Directories
+.test_code/
+.PDF/
+
+# Documentation
+MASTER INSTRUCTION.md
+
+# OS generated files
+.DS_Store
+Thumbs.db
