@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import io
 
 API_URL = "http://localhost:8000/api/v1/audit"
 
@@ -139,12 +140,12 @@ else:
 
         # Reorder columns for better UX if they exist
         cols = [
-            "spec",
-            "expected_credit",
             "status",
+            "spec",
+            "description",
+            "expected_credit",
             "extracted_pdf_text",
             "reasoning",
-            "description",
         ]
         existing_cols = [c for c in cols if c in df.columns]
         # Add any extra columns
@@ -154,10 +155,29 @@ else:
         # Apply conditional formatting
         styled_df = df.style.apply(color_rows, axis=1)
 
-        st.dataframe(styled_df, width='stretch', height=600)
+        st.dataframe(styled_df, width="stretch", height=600)
+
+        # --- EXCEL DOWNLOAD FEATURE ---
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            df.to_excel(writer, index=False, sheet_name="Audit Results")
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                label="⬇️ Download Results as Excel",
+                data=buffer.getvalue(),
+                file_name="audit_results.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True,
+            )
+        with col2:
+            if st.button("🔄 Run Another Audit", use_container_width=True):
+                st.session_state.audit_results = None
+                st.rerun()
     else:
         st.warning("No results returned.")
-
-    if st.button("Run Another Audit"):
-        st.session_state.audit_results = None
-        st.rerun()
+        if st.button("Run Another Audit"):
+            st.session_state.audit_results = None
+            st.rerun()

@@ -37,7 +37,7 @@ async def process_batch(batch: list[dict]) -> list[dict]:
 
     try:
         response = await client.aio.models.generate_content(
-            model="models/gemma-4-31b-it",
+            model="gemini-3.5-flash",
             contents=prompt,
             config=GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
