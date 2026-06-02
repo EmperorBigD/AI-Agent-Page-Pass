@@ -154,7 +154,7 @@ else:
         # Apply conditional formatting
         styled_df = df.style.apply(color_rows, axis=1)
 
-        st.dataframe(styled_df, use_container_width=True, height=600)
+        st.dataframe(styled_df, width='stretch', height=600)
     else:
         st.warning("No results returned.")
 

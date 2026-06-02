@@ -62,6 +62,11 @@ async def process_batch(batch: list[dict]) -> list[dict]:
             else:
                 clean_text = raw_text
 
+        # Robust cleanup for invalid backslash escapes (e.g. invalid \uXXXX or \c)
+        # This finds any backslash that is NOT followed by a valid JSON escape sequence 
+        # (", \, /, b, f, n, r, t, or u + 4 hex digits) and escapes it.
+        clean_text = re.sub(r'\\(?![/"\\bfnrt]|u[0-9a-fA-F]{4})', r'\\\\', clean_text)
+
         try:
             response_json = json.loads(clean_text)
         except json.JSONDecodeError as decode_error:
