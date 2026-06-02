@@ -57,6 +57,8 @@ def extract_pdf_windows(pdf_paths: list[str], assets: list[dict]) -> list[dict]:
             continue
 
         # Tier 2 (TF-IDF Lexical Match)
+        best_score = 0.0
+        best_match_idx = -1
         if not found and tfidf_matrix is not None and description:
             try:
                 # Transform the description
@@ -110,7 +112,16 @@ def extract_pdf_windows(pdf_paths: list[str], assets: list[dict]) -> list[dict]:
         # Tier 4 (Unfound)
         if not found:
             asset["status"] = "Unfound"
-            asset["extracted_pdf_text"] = None
+            
+            # Add debug info so we can see why it failed
+            if len(all_pages) == 0:
+                asset["extracted_pdf_text"] = "DEBUG: No pages were loaded from the PDF (corrupted?)."
+            elif tfidf_matrix is None:
+                asset["extracted_pdf_text"] = "DEBUG: PyMuPDF could not read ANY text from the PDF. It might be a scanned image with no embedded text layer."
+            elif not description:
+                asset["extracted_pdf_text"] = "DEBUG: Skipped Tier 2 because 'description' from Excel was empty."
+            else:
+                asset["extracted_pdf_text"] = f"DEBUG: Found text, but the highest similarity score for this description was only {best_score:.4f} (needs > 0.05). The closest match was on page index {best_match_idx}. Either the PDF doesn't contain this asset, or the text differs drastically."
 
         results.append(asset)
 

@@ -37,7 +37,7 @@ async def process_batch(batch: list[dict]) -> list[dict]:
 
     try:
         response = await client.aio.models.generate_content(
-            model="models/gemma-4-26b-a4b-it",
+            model="models/gemma-4-31b-it",
             contents=prompt,
             config=GenerateContentConfig(
                 system_instruction=SYSTEM_PROMPT,
@@ -63,9 +63,9 @@ async def process_batch(batch: list[dict]) -> list[dict]:
                 clean_text = raw_text
 
         # Robust cleanup for invalid backslash escapes (e.g. invalid \uXXXX or \c)
-        # This finds any backslash that is NOT followed by a valid JSON escape sequence 
+        # This finds any backslash that is NOT followed by a valid JSON escape sequence
         # (", \, /, b, f, n, r, t, or u + 4 hex digits) and escapes it.
-        clean_text = re.sub(r'\\(?![/"\\bfnrt]|u[0-9a-fA-F]{4})', r'\\\\', clean_text)
+        clean_text = re.sub(r'\\(?![/"\\bfnrt]|u[0-9a-fA-F]{4})', r"\\\\", clean_text)
 
         try:
             response_json = json.loads(clean_text)
