@@ -1,82 +1,72 @@
-# 📄 Page Pass AI Agent
+# Page Pass AI Agent
 
-**Automated Audit System to verify asset credits in typeset PDF proofs against an Excel permissions log.**
+**Automated Audit System for Asset Credit Verification in Typeset PDF Proofs**
 
-## 💡 The Problem
-In the publishing industry, verifying that asset credits (like permissions and citations for figures, tables, and images) have been accurately inserted into typeset PDF proofs is a massive bottleneck. Editors must manually cross-reference a master Excel permissions log with a multi-page PDF document, searching for the figure, checking the credit line, and ensuring there are no typos or missing slashes. It is tedious, error-prone, and time-consuming.
+## Overview
+In the publishing industry, verifying that asset credits (e.g., permissions and citations for figures, tables, and images) have been accurately inserted into typeset PDF proofs is a recognized operational bottleneck. Editorial staff typically cross-reference a master Excel permissions log with multi-page PDF documents, verifying figure placement, validating credit lines, and ensuring strict formatting compliance. This process is time-intensive and highly susceptible to human error.
 
-## 🚀 The Solution
-**Page Pass AI Agent** completely automates this workflow. It acts as an intelligent orchestration pipeline that:
-1. **Parses the Master Log:** Reads the Excel file to extract the expected assets, expected credit lines, and descriptions.
-2. **Scans the PDF Proofs:** Uses advanced multi-tier text extraction (leveraging TF-IDF vectorization) to locate the exact text window surrounding the target figure in the PDF, even if there are formatting inconsistencies (e.g., "Figure 06.07" vs "Fig. 6.7").
-3. **AI Auditing:** Batches the extracted text windows and sends them to the Gemini AI model to semantically evaluate the credits. It catches missing spaces around slashes, ignores arbitrary bracketed numbers, and handles minor typos gracefully.
-4. **Beautiful Presentation:** Returns the audit results in a sleek, dark-themed Streamlit UI, using conditional formatting to highlight exactly what passed and what failed.
+**Page Pass AI Agent** automates this verification workflow. It functions as an intelligent orchestration pipeline that dynamically parses the master log, extracts corresponding text regions from the PDF proofs using NLP-driven spatial search, and utilizes a Large Language Model (LLM) to perform semantic and formatting validation.
 
----
+## Key Features
+* **Automated Log Parsing:** Ingests the master Excel permissions log to extract expected assets, credit lines, and contextual descriptions.
+* **Intelligent PDF Extraction:** Employs multi-tier text extraction leveraging TF-IDF vectorization to accurately locate the text window surrounding target figures, effectively handling typesetting variations and formatting inconsistencies.
+* **LLM-Powered Auditing:** Batches extracted text regions and interfaces with the Gemini AI model to evaluate credits. The LLM performs semantic validation, identifies formatting anomalies (e.g., missing spaces around slashes), and handles minor typographical errors.
+* **Data Export & Reporting:** Renders audit results in a reactive web interface with conditional formatting. Provides native functionality to export the finalized audit DataFrame directly to an Excel (`.xlsx`) format for downstream processing.
 
-## 🛠️ The Tech Stack (The Fun Part!)
+## Architecture & Technology Stack
 
-We built this using a robust, decoupled architecture:
+The application is built on a decoupled, microservices-oriented architecture:
 
 ### 1. Backend Orchestration
-*   **FastAPI & Uvicorn:** Serves as the central nervous system, handling asynchronous `multipart/form-data` uploads for both the Excel log and the PDF chapters simultaneously.
-*   **Pydantic:** Enforces strict data schemas (`BatchAuditResponse`, `AuditResult`) to guarantee predictable JSON payloads from the AI.
+* **FastAPI & Uvicorn:** Serves as the primary API gateway, handling asynchronous `multipart/form-data` uploads for simultaneous processing of Excel logs and PDF chapters.
+* **Pydantic:** Enforces strict data schemas (`BatchAuditResponse`, `AuditResult`) to guarantee predictable JSON payloads from the LLM.
 
 ### 2. Data Processing & Extraction
-*   **Pandas & Openpyxl:** Reads and filters the uploaded `.xlsx` files using strict Regex patterns to grab only actionable items.
-*   **PyMuPDF (`fitz`):** Extracts raw text from the PDFs.
-*   **Scikit-Learn (TF-IDF):** Our secret weapon for PDF extraction! When simple string matching fails due to typesetting variations, we use `TfidfVectorizer` and `cosine_similarity` to find the most relevant block of text surrounding the target figure.
+* **Pandas & Openpyxl:** Processes uploaded `.xlsx` files utilizing regex patterns to isolate actionable items.
+* **PyMuPDF (`fitz`):** Extracts raw text from PDF documents with robust error handling for encrypted or malformed files.
+* **Scikit-Learn (TF-IDF):** Implements `TfidfVectorizer` and `cosine_similarity` as a fallback heuristic to locate relevant text blocks when direct string matching fails due to typesetting modifications.
 
-### 3. AI Intelligence
-*   **Google GenAI SDK (`google-genai`):** Communicates with the Gemini models (e.g., `gemini-2.5-pro` or `gemma-4-26b-a4b-it`) asynchronously using `asyncio.gather` to process batches of 20 assets at a time.
-*   **Robust JSON Parsing:** We implemented Regex fallbacks (`re.search`) to slice out valid JSON blocks from the AI's response, completely immunizing the system against Markdown ticks or rogue conversational text (`Extra data` JSONDecodeErrors).
+### 3. AI Integration
+* **Google GenAI SDK:** Interfaces with Gemini models (e.g., `gemini-2.5-pro` or `gemma-4-26b-a4b-it`) asynchronously using `asyncio.gather` for batch processing.
+* **Response Sanitization:** Implements robust regex-based sanitization (`re.sub`) to normalize invalid Unicode escapes and guarantee JSON decoder stability against hallucinated markdown or conversational text.
 
-### 4. Frontend UI
-*   **Streamlit:** Provides a fast, stateless, and interactive UI.
-*   **Custom CSS:** Injected premium CSS to enforce a sleek dark mode (`#0e1117`), gradient buttons with hover micro-animations, and modern typography (`Inter`).
-*   **Session State:** Dynamically hides the upload forms once the audit is running, seamlessly transitioning into the final conditionally-formatted Pandas DataFrame.
+### 4. Frontend Interface
+* **Streamlit:** Delivers a fast, stateless web interface.
+* **In-Memory File Processing:** Utilizes `io.BytesIO` to generate downloadable Excel reports directly from the active pandas DataFrame without requiring persistent backend storage.
 
----
+## Workflow Execution
 
-## 🚦 Walkthrough: How It Works
+1. **Initialization:** The user uploads the master Excel permissions log and the corresponding PDF chapters via the web interface.
+2. **Processing:** The FastAPI backend receives the payload, parses the Excel sheet, and applies the PyMuPDF/Scikit-Learn pipeline to extract targeted text windows for each asset.
+3. **Auditing:** The orchestration layer batches the extracted text and queries the LLM. The LLM classifies each asset as `Correct`, `Incorrect`, or `Unfound` based on strict programmatic prompt instructions.
+4. **Result Delivery:** The backend returns a structured JSON payload. The frontend visualizes this data in a conditionally-formatted table, providing immediate feedback on compliance status.
+5. **Export:** The user can export the verified dataset to an Excel file.
 
-1. **Upload:** You drop your Excel permissions log and your PDF chapters into the centered dropzone on the web UI.
-2. **Process:** You click **Run Audit**. The UI hides the uploader and spins up a loading indicator.
-3. **Extract:** The FastAPI backend receives the files, parses the Excel sheet, and uses PyMuPDF + Scikit-Learn to hunt down the exact text windows in the PDF for every single asset.
-4. **Audit:** The AI Agent groups these text windows into batches and queries the LLM. The LLM grades them as `Correct`, `Incorrect`, or `Unfound` based on a strict set of prompt instructions (e.g., strict slash spacing).
-5. **Results:** The backend returns a structured JSON payload to Streamlit, which renders a beautiful table.
-   *   🟢 **Green:** The credit is perfect.
-   *   🔴 **Red:** The credit is incorrect, altered, or missing.
-   *   🟡 **Yellow:** The figure couldn't be found in the PDF.
+## Getting Started
 
----
-
-## 💻 Getting Started
-
-### 1. Clone & Setup Environment
-Ensure you have Python installed. Create a virtual environment and install dependencies:
+### 1. Environment Setup
+Ensure Python 3.9+ is installed. Initialize a virtual environment and install dependencies:
 ```bash
-python -m venv venv
-venv\Scripts\activate
+python -m venv .myvenv
+.\.myvenv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Set API Key
-Create a `.env` file in the root directory and add your Google Gemini API Key:
+### 2. Configuration
+Create a `.env` file in the project root directory and define your Google Gemini API Key:
 ```env
 GEMINI_API_KEY="your_api_key_here"
 ```
 
-### 3. Run the Backend
+### 3. Initialize Services
 Start the FastAPI orchestration server in your terminal:
 ```bash
-venv\Scripts\uvicorn main_api:app --port 8000 --reload
+.\.myvenv\Scripts\uvicorn main_api:app --port 8000 --reload
 ```
 
-### 4. Run the Frontend
-Open a *new* terminal, activate the environment, and start Streamlit:
+Open a secondary terminal, activate the environment, and initialize the Streamlit frontend:
 ```bash
-venv\Scripts\activate
-streamlit run frontend.py
+.\.myvenv\Scripts\activate
+.\.myvenv\Scripts\streamlit run frontend.py
 ```
-*Navigate to `http://localhost:8501` to use the Agent!*
+Access the application interface at `http://localhost:8501`.
