@@ -1,3 +1,13 @@
+---
+title: AI Agent Page Pass
+emoji: 📄
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # Page Pass AI Agent
 
 **Automated Audit System for Asset Credit Verification in Typeset PDF Proofs**
