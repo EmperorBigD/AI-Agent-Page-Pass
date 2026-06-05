@@ -1,9 +1,11 @@
+"""Streamlit frontend for the Page Pass AI Agent."""
+
 import streamlit as st
 import requests
 import pandas as pd
 import io
 
-API_URL = "http://localhost:8000/api/v1/audit"
+from config import API_AUDIT_ENDPOINT, API_REQUEST_TIMEOUT
 
 st.set_page_config(page_title="Page Pass AI", layout="wide", page_icon="📄")
 
@@ -116,7 +118,9 @@ if st.session_state.audit_results is None:
                         )
 
                     # Make API Request
-                    response = requests.post(API_URL, files=files)
+                    response = requests.post(
+                        API_AUDIT_ENDPOINT, files=files, timeout=API_REQUEST_TIMEOUT
+                    )
 
                     if response.status_code == 200:
                         data = response.json()
@@ -170,10 +174,10 @@ else:
                 data=buffer.getvalue(),
                 file_name="audit_results.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True,
+                width="stretch",
             )
         with col2:
-            if st.button("🔄 Run Another Audit", use_container_width=True):
+            if st.button("🔄 Run Another Audit", width="stretch"):
                 st.session_state.audit_results = None
                 st.rerun()
     else:

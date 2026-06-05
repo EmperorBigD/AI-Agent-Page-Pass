@@ -1,5 +1,49 @@
+"""
+Data schemas for the Page Pass AI Agent.
+
+Defines Pydantic models for strict validation of data flowing through
+the Excel → PDF → LLM pipeline, and TypedDicts for internal structures.
+"""
+
+from __future__ import annotations
+
+from typing import Optional, TypedDict, Any
+
 from pydantic import BaseModel, Field
-from typing import Optional
+
+
+# ──────────────────────────────────────────────
+# Internal Pipeline Types
+# ──────────────────────────────────────────────
+
+class AssetSpec(BaseModel):
+    """A single asset extracted from the Excel permissions log.
+
+    This model represents the *input* to the PDF extraction and LLM
+    audit stages.
+    """
+
+    spec: str = Field(..., description="The asset specification, e.g. 'Figure 4.1'")
+    expected_credit: str = Field(
+        ..., description="The credit line that should appear in the PDF"
+    )
+    description: str = Field(
+        "", description="Description of the asset used for TF-IDF fallback matching"
+    )
+
+
+class PageData(TypedDict):
+    """Typed representation of a single loaded PDF page."""
+
+    pdf: str
+    page_num: int
+    page: Any  # fitz.Page — not typed to avoid hard PyMuPDF dependency on import
+    text: str
+
+
+# ──────────────────────────────────────────────
+# LLM Response Types
+# ──────────────────────────────────────────────
 
 
 class AuditResult(BaseModel):
