@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 # Internal Pipeline Types
 # ──────────────────────────────────────────────
 
+
 class AssetSpec(BaseModel):
     """A single asset extracted from the Excel permissions log.
 

@@ -109,12 +109,8 @@ async def run_audit_batch(assets: list[dict]) -> list[dict]:
     Returns:
         A flat list of audit result dictionaries.
     """
-    batches = [
-        assets[i : i + BATCH_SIZE] for i in range(0, len(assets), BATCH_SIZE)
-    ]
-    logger.info(
-        "Starting audit: %d assets in %d batch(es)", len(assets), len(batches)
-    )
+    batches = [assets[i : i + BATCH_SIZE] for i in range(0, len(assets), BATCH_SIZE)]
+    logger.info("Starting audit: %d assets in %d batch(es)", len(assets), len(batches))
 
     tasks = [process_batch(batch) for batch in batches]
     results = await asyncio.gather(*tasks)

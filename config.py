@@ -21,8 +21,8 @@ BATCH_SIZE: int = int(os.getenv("BATCH_SIZE", "20"))
 # PDF Extraction Settings
 # ──────────────────────────────────────────────
 TFIDF_THRESHOLD: float = float(os.getenv("TFIDF_THRESHOLD", "0.05"))
-PDF_WINDOW_BEFORE: int = 500   # characters before the matched spec
-PDF_WINDOW_AFTER: int = 1000   # characters after the matched spec
+PDF_WINDOW_BEFORE: int = 500  # characters before the matched spec
+PDF_WINDOW_AFTER: int = 1000  # characters after the matched spec
 TFIDF_WINDOW_SIZE: int = 1500  # characters extracted on a Tier-2 match
 
 # ──────────────────────────────────────────────

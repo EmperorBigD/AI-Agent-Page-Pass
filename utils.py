@@ -68,9 +68,7 @@ def sanitize_llm_json(raw_text: str) -> dict:
 
     # Step 3: Fix invalid backslash escapes (e.g. malformed \uXXXX or \c)
     # Escapes any backslash NOT followed by a valid JSON escape sequence.
-    clean_text = re.sub(
-        r'\\(?![/"\\bfnrt]|u[0-9a-fA-F]{4})', r"\\\\", clean_text
-    )
+    clean_text = re.sub(r'\\(?![/"\\bfnrt]|u[0-9a-fA-F]{4})', r"\\\\", clean_text)
 
     # Step 4: Decode
     try:

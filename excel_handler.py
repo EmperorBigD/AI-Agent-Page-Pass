@@ -86,9 +86,7 @@ def _resolve_columns(df: pd.DataFrame) -> dict[str, str]:
         )
 
     # Description column
-    desc_col = next(
-        (col for col in df.columns if "description" in col.lower()), None
-    )
+    desc_col = next((col for col in df.columns if "description" in col.lower()), None)
     if not desc_col:
         desc_col = next(
             (col for col in df.columns if "detail" in col.lower()),

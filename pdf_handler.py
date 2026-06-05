@@ -21,7 +21,12 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from scipy.sparse import spmatrix
 
-from config import TFIDF_THRESHOLD, PDF_WINDOW_BEFORE, PDF_WINDOW_AFTER, TFIDF_WINDOW_SIZE
+from config import (
+    TFIDF_THRESHOLD,
+    PDF_WINDOW_BEFORE,
+    PDF_WINDOW_AFTER,
+    TFIDF_WINDOW_SIZE,
+)
 from schemas import PageData
 from utils import setup_logger
 
@@ -169,7 +174,9 @@ def _tier2_tfidf_match(
             asset["status"] = f"Found (Tier 2) - Score: {best_score:.2f}"
             logger.debug(
                 "Tier 2 hit for '%s' — score %.4f on page %d",
-                asset.get("spec"), best_score, pages[best_idx]["page_num"],
+                asset.get("spec"),
+                best_score,
+                pages[best_idx]["page_num"],
             )
             return True, best_score, best_idx
 
@@ -232,7 +239,9 @@ def _build_unfound_debug(
     description = asset.get("description", "")
 
     if len(pages) == 0:
-        error_str = " | ".join(pdf_errors) if pdf_errors else "Unknown reason (0 byte file?)"
+        error_str = (
+            " | ".join(pdf_errors) if pdf_errors else "Unknown reason (0 byte file?)"
+        )
         asset["extracted_pdf_text"] = (
             f"DEBUG: PyMuPDF failed to load any pages. Errors: {error_str}"
         )
@@ -253,7 +262,9 @@ def _build_unfound_debug(
             f"doesn't contain this asset, or the text differs drastically."
         )
 
-    logger.info("Unfound: '%s' — %s", asset.get("spec"), asset["extracted_pdf_text"][:120])
+    logger.info(
+        "Unfound: '%s' — %s", asset.get("spec"), asset["extracted_pdf_text"][:120]
+    )
 
 
 # ──────────────────────────────────────────────
