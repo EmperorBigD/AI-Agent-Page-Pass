@@ -8,13 +8,13 @@ def extract_pdf_windows(pdf_paths: list[str], assets: list[dict]) -> list[dict]:
     # Load all pages from all PDFs
     all_pages = []
     pdf_errors = []
-    
+
     for path in pdf_paths:
         try:
             doc = fitz.open(path)
             if doc.is_encrypted:
                 pdf_errors.append(f"PDF is encrypted/password protected.")
-            
+
             for page_num in range(len(doc)):
                 page = doc[page_num]
                 text = page.get_text()
@@ -119,17 +119,29 @@ def extract_pdf_windows(pdf_paths: list[str], assets: list[dict]) -> list[dict]:
         # Tier 4 (Unfound)
         if not found:
             asset["status"] = "Unfound"
-            
+
             # Add debug info so we can see why it failed
             if len(all_pages) == 0:
-                error_str = " | ".join(pdf_errors) if pdf_errors else "Unknown reason (0 byte file?)"
-                asset["extracted_pdf_text"] = f"DEBUG: PyMuPDF failed to load any pages. Errors: {error_str}"
+                error_str = (
+                    " | ".join(pdf_errors)
+                    if pdf_errors
+                    else "Unknown reason (0 byte file?)"
+                )
+                asset["extracted_pdf_text"] = (
+                    f"DEBUG: PyMuPDF failed to load any pages. Errors: {error_str}"
+                )
             elif tfidf_matrix is None:
-                asset["extracted_pdf_text"] = "DEBUG: PyMuPDF could not read ANY text from the PDF. It might be a scanned image with no embedded text layer."
+                asset["extracted_pdf_text"] = (
+                    "DEBUG: PyMuPDF could not read ANY text from the PDF. It might be a scanned image with no embedded text layer."
+                )
             elif not description:
-                asset["extracted_pdf_text"] = "DEBUG: Skipped Tier 2 because 'description' from Excel was empty."
+                asset["extracted_pdf_text"] = (
+                    "DEBUG: Skipped Tier 2 because 'description' from Excel was empty."
+                )
             else:
-                asset["extracted_pdf_text"] = f"DEBUG: Found text, but the highest similarity score for this description was only {best_score:.4f} (needs > 0.05). The closest match was on page index {best_match_idx}. Either the PDF doesn't contain this asset, or the text differs drastically."
+                asset["extracted_pdf_text"] = (
+                    f"DEBUG: Found text, but the highest similarity score for this description was only {best_score:.4f} (needs > 0.05). The closest match was on page index {best_match_idx}. Either the PDF doesn't contain this asset, or the text differs drastically."
+                )
 
         results.append(asset)
 
