@@ -12,6 +12,8 @@ app_port: 7860
 
 **Automated Audit System for Asset Credit Verification in Typeset PDF Proofs**
 
+> **Live Deployment:** [Access the application on Hugging Face Spaces](https://huggingface.co/spaces/EmperorBigD/AI_Agent_Page_Pass)
+
 ## Overview
 
 In the publishing industry, verifying that asset credits (e.g., permissions and citations for figures, tables, and images) have been accurately inserted into typeset PDF proofs is a recognized operational bottleneck. Editorial staff typically cross-reference a master Excel permissions log with multi-page PDF documents, verifying figure placement, validating credit lines, and ensuring strict formatting compliance. This process is time-intensive and highly susceptible to human error.
@@ -75,6 +77,27 @@ The application is built on a decoupled, modular architecture with strict separa
 
 * **Streamlit:** Delivers a reactive web interface with a dark theme, gradient-styled controls, and conditional row formatting (green/red/yellow) based on audit status.
 * **In-Memory File Processing:** Utilizes `io.BytesIO` to generate downloadable Excel reports directly from the active DataFrame without requiring persistent storage.
+
+## Deployment & CI/CD Pipeline
+
+The application features a fully automated Continuous Integration and Continuous Deployment (CI/CD) pipeline, connecting version control (GitHub) directly to a containerized hosting environment on Hugging Face Spaces.
+
+### 1. Containerization (Docker)
+A deterministic environment blueprint hosts both the backend and frontend architectures simultaneously within a single container lifecycle:
+* **Base Image:** `python:3.10-slim` provides a lightweight Linux environment.
+* **System Dependencies:** `build-essential` provides the underlying C++ compilers required for the PyMuPDF rendering engine on Linux.
+* **Concurrent Execution:** A single `CMD` instruction boots the FastAPI server (`uvicorn`) on port `8000` via background execution (`&`) while simultaneously launching the Streamlit frontend on port `7860`.
+
+### 2. Space Configuration
+Hugging Face Spaces is configured via YAML Frontmatter at the top of this `README.md`:
+* **SDK Declaration:** `sdk: docker` instructs the build engine to bypass standard Python templates and utilize the custom Dockerfile.
+* **Port Mapping:** `app_port: 7860` routes external HTTP web traffic to the internal Streamlit port.
+
+### 3. Automated Deployment (GitHub Actions)
+The automation engine eliminates manual server uploads:
+* **Workflow:** A GitHub Action (`.github/workflows/sync_to_hf.yml`) listens for pushes to the `main` branch.
+* **Authentication:** A Hugging Face User Access Token with `Write` permissions is injected securely via GitHub Secrets (`HF_TOKEN`), preventing unauthorized API access.
+* **Execution:** Upon commit detection, an ephemeral Ubuntu runner checks out the repository and executes a forced Git push directly to the Hugging Face remote repository.
 
 ## Workflow Execution
 
