@@ -4,6 +4,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import io
+import os
 
 from config import API_AUDIT_ENDPOINT, API_REQUEST_TIMEOUT
 
@@ -62,6 +63,21 @@ st.markdown(
     "**Automated Audit System** | Verify asset credits in typeset PDF proofs against your permissions log."
 )
 
+# --- CONFIGURATION SIDEBAR ---
+env_api_key = os.getenv("GEMINI_API_KEY")
+
+with st.sidebar:
+    st.header("Configuration")
+    
+    if env_api_key:
+        st.success("✅ API key loaded from environment")
+        api_key = env_api_key
+    else:
+        api_key = st.text_input(
+            "Gemini API Key",
+            type="password",
+            help="Enter your Google Gemini API key to run the AI audit."
+        )
 
 def color_rows(row):
     status = str(row.get("status", "")).lower()
@@ -91,7 +107,9 @@ if st.session_state.audit_results is None:
     submit_btn = st.button("Run Audit", type="primary")
 
     if submit_btn:
-        if not excel_file:
+        if not api_key:
+            st.error("Please enter your Gemini API Key in the sidebar.")
+        elif not excel_file:
             st.error("Please upload the Excel Permissions Log.")
         elif not pdf_files:
             st.error("Please upload at least one PDF proof.")
@@ -118,8 +136,9 @@ if st.session_state.audit_results is None:
                         )
 
                     # Make API Request
+                    payload_data = {"api_key": api_key}
                     response = requests.post(
-                        API_AUDIT_ENDPOINT, files=files, timeout=API_REQUEST_TIMEOUT
+                        API_AUDIT_ENDPOINT, data=payload_data, files=files, timeout=API_REQUEST_TIMEOUT
                     )
 
                     if response.status_code == 200:

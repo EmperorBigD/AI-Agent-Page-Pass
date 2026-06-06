@@ -13,7 +13,7 @@ import shutil
 import tempfile
 from typing import List
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from excel_handler import process_excel
@@ -54,13 +54,14 @@ async def health_check():
 
 @app.post("/api/v1/audit")
 async def audit_assets(
+    api_key: str = Form(...),
     excel_file: UploadFile = File(...),
     pdf_files: List[UploadFile] = File(...),
 ):
     """Run the full Excel → PDF → LLM audit pipeline.
 
     Accepts a single Excel permissions log and one or more PDF chapter
-    proofs as multipart file uploads.
+    proofs as multipart file uploads, along with the user's API key.
 
     Returns:
         A JSON object with a ``results`` key containing the list of
@@ -117,7 +118,7 @@ async def audit_assets(
 
         # ── Phase 3: AI Audit ──
         try:
-            final_results = await run_audit_batch(extracted_assets)
+            final_results = await run_audit_batch(extracted_assets, api_key)
         except LLMResponseError as e:
             logger.error("LLM audit failed: %s", e)
             raise HTTPException(status_code=502, detail=str(e))

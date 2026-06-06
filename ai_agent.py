@@ -13,7 +13,7 @@ import json
 from google import genai
 from google.genai.types import GenerateContentConfig
 
-from config import GEMINI_API_KEY, GEMINI_MODEL_NAME, BATCH_SIZE
+from config import GEMINI_MODEL_NAME, BATCH_SIZE
 from exceptions import LLMResponseError
 from schemas import BatchAuditResponse, AuditResult
 from prompts import SYSTEM_PROMPT, USER_PROMPT_TEMPLATE
@@ -21,16 +21,13 @@ from utils import setup_logger, sanitize_llm_json
 
 logger = setup_logger(__name__)
 
-# Initialize client
-client = genai.Client(api_key=GEMINI_API_KEY)
-
 
 # ──────────────────────────────────────────────
 # Batch Processing
 # ──────────────────────────────────────────────
 
 
-async def process_batch(batch: list[dict]) -> list[dict]:
+async def process_batch(batch: list[dict], api_key: str) -> list[dict]:
     """Send a single batch of assets to the LLM for audit evaluation.
 
     Assets with status ``"Unfound"`` are excluded from the LLM call and
@@ -38,6 +35,7 @@ async def process_batch(batch: list[dict]) -> list[dict]:
 
     Args:
         batch: A list of asset dictionaries (max :data:`config.BATCH_SIZE`).
+        api_key: The user-provided Gemini API key.
 
     Returns:
         A list of audit result dictionaries combining LLM responses and
@@ -60,6 +58,9 @@ async def process_batch(batch: list[dict]) -> list[dict]:
     prompt = USER_PROMPT_TEMPLATE.format(batch_json=json.dumps(to_process, indent=2))
 
     try:
+        # Initialize client per-request using the user's provided key
+        client = genai.Client(api_key=api_key)
+        
         logger.info(
             "Sending batch of %d assets to %s", len(to_process), GEMINI_MODEL_NAME
         )
@@ -99,20 +100,23 @@ async def process_batch(batch: list[dict]) -> list[dict]:
 # ──────────────────────────────────────────────
 
 
-async def run_audit_batch(assets: list[dict]) -> list[dict]:
+async def run_audit_batch(assets: list[dict], api_key: str) -> list[dict]:
     """Group extracted PDF windows into batches and run concurrent LLM audits.
 
     Args:
         assets: The full list of assets with ``extracted_pdf_text`` populated
             by the PDF extraction pipeline.
+        api_key: The user-provided Gemini API key.
 
     Returns:
         A flat list of audit result dictionaries.
     """
     batches = [assets[i : i + BATCH_SIZE] for i in range(0, len(assets), BATCH_SIZE)]
-    logger.info("Starting audit: %d assets in %d batch(es)", len(assets), len(batches))
+    logger.info(
+        "Starting audit: %d assets in %d batch(es)", len(assets), len(batches)
+    )
 
-    tasks = [process_batch(batch) for batch in batches]
+    tasks = [process_batch(batch, api_key) for batch in batches]
     results = await asyncio.gather(*tasks)
 
     # Flatten
@@ -144,6 +148,9 @@ if __name__ == "__main__":
             "status": "Found (Tier 1)",
         }
     ]
-    result = asyncio.run(run_audit_batch(sample))
+    # For standalone testing, fallback to environment key
+    import os
+    test_key = os.getenv("GEMINI_API_KEY", "DUMMY_KEY")
+    result = asyncio.run(run_audit_batch(sample, test_key))
     for r in result:
         print(f"  {r.get('spec'):20s} | {r.get('status')}")
