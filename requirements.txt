@@ -8,3 +8,4 @@ google-genai
 pydantic
 python-multipart
 python-dotenv
+scikit-learn
