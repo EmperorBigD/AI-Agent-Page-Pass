@@ -20,5 +20,5 @@ COPY . .
 EXPOSE 8000
 EXPOSE 7860
 
-# Start FastAPI in the background, Streamlit in the foreground
-CMD uvicorn main_api:app --host 0.0.0.0 --port 8000 & streamlit run frontend.py --server.port 7860 --server.address 0.0.0.0
+# Start FastAPI in the background, Streamlit in the foreground (with Hugging Face security flags)
+CMD uvicorn main_api:app --host 0.0.0.0 --port 8000 & streamlit run frontend.py --server.port 7860 --server.address 0.0.0.0 --server.enableCORS false --server.enableXsrfProtection false
