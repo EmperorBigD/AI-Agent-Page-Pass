@@ -4,7 +4,6 @@ import streamlit as st
 import requests
 import pandas as pd
 import io
-import os
 
 from config import API_AUDIT_ENDPOINT, API_REQUEST_TIMEOUT
 
@@ -64,20 +63,17 @@ st.markdown(
 )
 
 # --- CONFIGURATION SIDEBAR ---
-env_api_key = os.getenv("GEMINI_API_KEY")
-
 with st.sidebar:
     st.header("Configuration")
     
-    if env_api_key:
-        st.success("✅ API key loaded from environment")
-        api_key = env_api_key
-    else:
-        api_key = st.text_input(
-            "Gemini API Key",
-            type="password",
-            help="Enter your Google Gemini API key to run the AI audit."
-        )
+    api_key = st.text_input(
+        "Gemini API Key",
+        type="password",
+        help="Enter your Google Gemini API key to run the AI audit."
+    )
+    
+    if api_key:
+        st.success("✅ API key added successfully!")
 
 def color_rows(row):
     status = str(row.get("status", "")).lower()
